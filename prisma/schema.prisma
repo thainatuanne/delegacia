@@ -1,0 +1,113 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Criminoso {
+  id                     String       @id @default(uuid()) @db.Uuid
+  nome                   String       @db.VarChar(100)
+  sobrenome              String       @db.VarChar(100)
+  cpf                    String       @unique @db.Char(11)
+  data_nascimento        DateTime
+  antecedentes_criminais Antecedentes @default(SEM_ANTECEDENTES)
+
+  crimes     Crime[]
+  endereco   Endereco? @relation(fields: [enderecoId], references: [id])
+  enderecoId String?   @unique @db.Uuid
+
+  @@map("criminosos")
+}
+
+enum Antecedentes {
+  SEM_ANTECEDENTES
+  CRIMINOSO_OCASIONAL
+  REINCIDENTE
+  PERIGOSO
+}
+
+model Endereco {
+  id     String  @id @default(uuid()) @db.Uuid
+  rua    String  @db.VarChar(100)
+  numero String  @db.VarChar(50)
+  bairro String  @db.VarChar(100)
+  cidade String  @db.VarChar(100)
+  estado Estados @default(RS)
+  cep    String  @db.VarChar(10)
+
+  criminoso Criminoso?
+
+  @@map("enderecos")
+}
+
+enum Estados {
+  AC
+  AL
+  AP
+  AM
+  BA
+  CE
+  DF
+  ES
+  GO
+  MA
+  MT
+  MS
+  MG
+  PA
+  PB
+  PR
+  PE
+  PI
+  RJ
+  RN
+  RS
+  RO
+  RR
+  SC
+  SP
+  SE
+  TO
+}
+
+model Crime {
+  id              String   @id @default(uuid()) @db.Uuid
+  descricao       String   @db.Text
+  data_ocorrencia DateTime @default(now())
+
+  criminoso   Criminoso @relation(fields: [criminosoId], references: [id])
+  criminosoId String    @db.Uuid
+  armas       Arma[]
+
+  @@map("crimes")
+}
+
+model Arma {
+  id           String   @id @default(uuid()) @db.Uuid
+  tipo         TipoArma @default(REVOLVER)
+  modelo       String   @db.VarChar(100)
+  numero_serie String   @unique @db.VarChar(80)
+
+  crime   Crime  @relation(fields: [crimeId], references: [id])
+  crimeId String @db.Uuid
+
+  @@map("armas")
+}
+
+enum TipoArma {
+  REVOLVER
+  PISTOLA
+  FUZIL
+  ESPINGARDA
+  ARMA_BRANCA
+  OUTRA
+}
